@@ -1,20 +1,19 @@
 import express from 'express';
-import pool from './db';
+import cors from 'cors';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/user';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-const connectionCheck = async () => {
-    try {
-        const res = await pool.query('SELECT NOW()');
-        console.log('Database connected:', res.rows[0].now);
-    } catch (err) {
-        console.error('Database connection error:', err);
-        process.exit(1);
-    }
-};
+app.use('/auth', authRoutes);
+app.use('/user', userRoutes); 
 
-const PORT = 5000;
-app.listen(PORT, async () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    await connectionCheck();
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Backend running at http://localhost:${PORT}`);
 });
