@@ -15,7 +15,7 @@ interface AuthRequestBody {
 }
 
 // POST /auth/register - Create a new user
-router.post('/register', async (req: Request<{}, {}, AuthRequestBody>, res: Response) => {
+router.post('/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: "Username and password are required" });
@@ -23,14 +23,19 @@ router.post('/register', async (req: Request<{}, {}, AuthRequestBody>, res: Resp
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query(
+    const result = await pool.query(
       'INSERT INTO "User" (username, password) VALUES ($1, $2)',
       [username, hashedPassword]
     );
+
+    console.log("User saved:", result.rows[0]);
     res.status(201).json({ message: "User registered successfully" });
 
-  } catch (err) {
-    res.status(500).json({ error: "Username already exists or database error" });
+  } catch (err: any) {
+    console.error("POSTGRES ERROR:", err.message);
+    console.error("ERROR CODE:", err.code);
+
+    res.status(500).json({ error: err.message });
   }
 });
 
