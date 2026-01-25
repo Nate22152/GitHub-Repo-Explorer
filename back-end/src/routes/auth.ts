@@ -3,11 +3,17 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../db';
-
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+dotenv.config();
 const router = express.Router();
 
+
+const Supabase_Url = process.env.Supabas_Url || '';
+const Supabase_Anon_key = process.env.Supabase_Anon_key || '';
 const JWT_SECRET = process.env.JWT_SECRET || '';
 
+const supabase = createClient(Supabase_Url, Supabase_Anon_key);
 
 interface AuthRequestBody {
   username?: string;
@@ -23,12 +29,16 @@ router.post('/register', async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'INSERT INTO "User" (username, password) VALUES ($1, $2)',
-      [username, hashedPassword]
-    );
-
-    console.log("User saved:", result.rows[0]);
+    const result = await supabase 
+      .from ('User')
+      .insert([
+        {
+          username: username,
+          password: hashedPassword
+        }
+      ])
+      .select();
+    console.log("User saved:", result);
     res.status(201).json({ message: "User registered successfully" });
 
   } catch (err: any) {

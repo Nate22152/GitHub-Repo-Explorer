@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@supabase/supabase-js": "^2.91.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -29,6 +30,7 @@
     "@types/node": "^25.0.10",
     "@types/pg": "^8.16.0",
     "nodemon": "^3.1.11",
+    "supabase": "^2.72.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
