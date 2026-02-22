@@ -11,9 +11,12 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { token } = await apiRequest('/auth/login', 'POST', form);
-      localStorage.setItem('token', token);
-      navigate('/dashboard');
+      const response = await apiRequest('/auth/login', 'POST', form);
+      if(response.success && response.data && response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        navigate('/dashboard');
+      }
     } catch (err: any) { 
       alert(err.message); 
     } finally {

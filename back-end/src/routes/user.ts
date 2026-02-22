@@ -167,7 +167,7 @@ router.delete('/favorites/:id', authenticateJWT, async (req: any, res) => {
     const { error } = await supabase
       .from('favorite_repos')
       .delete()
-      .eq('id', id)
+      .eq('repo_id', id)
       .eq('user_id', req.user.id);
 
     if (error) {
