@@ -1,6 +1,5 @@
-// src/services/api.ts
 
-// Use the Render URL from .env, or fallback to localhost for development
+// Render URL 
 const API_BASE_URL = 'https://github-repo-explorer-6pzn.onrender.com';
 
 export const apiRequest = async (endpoint: string, method: string, body?: any) => {
