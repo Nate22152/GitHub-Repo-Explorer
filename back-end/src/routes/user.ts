@@ -95,7 +95,7 @@ router.post('/favorites', authenticateJWT, async (req: any, res) => {
       .select('id')
       .eq('user_id', req.user.id)
       .eq('repo_id', repositoryId)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return res.status(400).json({ 

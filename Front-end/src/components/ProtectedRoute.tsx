@@ -1,19 +1,17 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 
-interface Props {
-  children: React.ReactNode;
-}
+// Notice we removed the Props interface entirely since we don't need 'children'
 
-const ProtectedRoute = ({ children }: Props) => {
-  const token = localStorage.getItem('token');
+const ProtectedRoute = () => {
+  const token = localStorage.getItem('jwt_token'); 
+  const isAuthenticated = !!token; 
 
-  if (!token) {
-    // No token found? Send them away.
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Token exists? Let them see the page.
-  return <>{children}</>;
+  // <Outlet /> automatically renders whatever child <Route> matches in App.tsx
+  return <Outlet />; 
 };
 
 export default ProtectedRoute;

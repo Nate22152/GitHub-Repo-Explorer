@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiRequest } from '../services/api';
 
 interface GitHubRepo {
@@ -19,24 +19,43 @@ const Dashboard = () => {
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedRepos, setSavedRepos] = useState<Set<number>>(new Set());
+  useEffect(() => {
+  const loadFavorites = async () => {
+    try {
+      const response = await apiRequest('/user/favorites', 'GET');
+      if (response.success && response.data) {
+        const savedIds = new Set<number>(
+          response.data.map((fav: any) => Number(fav.repo_id))
+        );
+        setSavedRepos(savedIds);
+      }
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    }
+  };
 
+  loadFavorites();
+}, []);
   const handleSearch = async () => {
     if (!query.trim()) return;
-    
+    //review
+    console.log("hello mister");
+
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&per_page=30&sort=stars`);
+      const response = await fetch(`https://api.github.com/users/${query}/repos`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch repositories from GitHub');
       }
       
       const data = await response.json();
-      setRepos(data.items || []);
+      setRepos(data || []);
       
-      if (!data.items || data.items.length === 0) {
+      if (!data || data === 0) {
         setError('No repositories found. Try a different search term.');
       }
     } catch (err) {
@@ -49,36 +68,48 @@ const Dashboard = () => {
   };
 
   const handleSave = async (repo: GitHubRepo) => {
-    try {
-      const response = await apiRequest('/user/favorites', 'POST', {
-        repoId: repo.id,
-        githubId: repo.id, // Support both field names
-        name: repo.name,
-        description: repo.description,
-        stargazersCount: repo.stargazers_count,
-        htmlUrl: repo.html_url,
-        language: repo.language,
-        owner: repo.owner.login // Include owner field (required by backend)
-      });
+    const isSaved = savedRepos.has(repo.id);
 
-      if (response.success) {
-        alert(`✓ Saved ${repo.name} to favorites!`);
+  // Optimistically toggle
+    setSavedRepos(prev => {
+      const next = new Set(prev);
+      isSaved ? next.delete(repo.id) : next.add(repo.id);
+      return next;
+    });
+
+    try {
+     if (isSaved) {
+      // Remove from favorites
+       const response = await apiRequest(`/user/favorites/${repo.id}`, 'DELETE');
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to remove favorite');
+        }
       } else {
-        alert(response.error || 'Failed to save favorite');
-      }
+      // Add to favorites
+        const response = await apiRequest('/user/favorites', 'POST', {
+         repoId: repo.id,
+          githubId: repo.id,
+          name: repo.name,
+          description: repo.description,
+          stargazersCount: repo.stargazers_count,
+          htmlUrl: repo.html_url,
+         language: repo.language,
+         owner: repo.owner.login
+        });
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to save favorite');
+        }
+     }
     } catch (err: any) {
-      console.error('Error saving favorite:', err);
-      
-      // Handle specific error messages
-      if (err.message.includes('already in favorites')) {
-        alert(`${repo.name} is already in your favorites!`);
-      } else if (err.message.includes('not authenticated')) {
-        alert('Please log in to save favorites');
-      } else {
-        alert(err.message || 'Failed to save favorite. Please try again.');
-      }
-    }
-  };
+      // Revert optimistic update on any failure
+      setSavedRepos(prev => {
+       const next = new Set(prev);
+       isSaved ? next.add(repo.id) : next.delete(repo.id);
+       return next;
+      });
+      alert(err.message || 'Something went wrong. Please try again.');
+  }
+};
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -167,12 +198,30 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <button 
+                <button
                   onClick={() => handleSave(repo)}
-                  className="bg-github-green hover:opacity-90 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow-sm transition-opacity"
+                  title={savedRepos.has(repo.id) ? 'Favorited' : 'Add to favorites'}
+                  className={`p-2 rounded-full transition-colors ${
+                    savedRepos.has(repo.id)
+                      ? 'text-yellow-400 hover:text-yellow-500'
+                      : 'text-slate-300 hover:text-yellow-400'
+                  }`}
                 >
-                  Save
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill={savedRepos.has(repo.id) ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      className="w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.499z"
+                      />
+                    </svg>
+                  </button>
               </div>
             ))}
           </>

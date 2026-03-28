@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Favorites from './pages/Favorite';
+import Favorites from './pages/Favorites';
 import Navbar from './components/Navbar';
 
 function App() {

@@ -3,11 +3,11 @@ import { apiRequest } from '../services/api';
 
 interface Favorite {
   id: number;
-  githubId: number;
+  repo_id: number;
   name: string;
   description: string;
-  stargazersCount: number;
-  htmlUrl: string;
+  stargazers_count: number;
+  html_url: string;
   language: string;
 }
 
@@ -31,11 +31,11 @@ const Favorites = () => {
   }
 };
 
-  const removeFavorite = async (dbId: number) => {
+  const removeFavorite = async (repoIdToRemove: number) => {
     try {
-      await apiRequest(`/user/favorites/${dbId}`, 'DELETE');
+      await apiRequest(`/user/favorites/${repoIdToRemove}`, 'DELETE');
       // Update local state to remove the item immediately
-      setFavorites(favorites.filter(repo => repo.id !== dbId));
+      setFavorites(favorites.filter(repo => repo.repo_id !== repoIdToRemove));
     } catch (err) {
       alert("Failed to remove favorite");
     }
@@ -53,16 +53,16 @@ const Favorites = () => {
       ) : (
         <div className="grid gap-4">
           {(favorites || []).map((repo) => (
-            <div key={repo.githubId} className="p-5 border-l-4 border-blue-500 bg-white shadow rounded flex justify-between items-center">
+            <div key={repo.repo_id} className="p-5 border-l-4 border-blue-500 bg-white shadow rounded flex justify-between items-center">
               <div>
-                <a href={repo.htmlUrl} target="_blank" rel="noreferrer" className="text-xl font-bold text-blue-700 hover:underline">
+                <a href={repo.html_url} target="_blank" rel="noreferrer" className="text-xl font-bold text-blue-700 hover:underline">
                   {repo.name}
                 </a>
                 <p className="text-gray-700 mt-1">{repo.description}</p>
-                <p className="text-sm mt-2 text-gray-500">⭐ {repo.stargazersCount} | {repo.language}</p>
+                <p className="text-sm mt-2 text-gray-500">⭐ {repo.stargazers_count} | {repo.language}</p>
               </div>
               <button 
-                onClick={() => removeFavorite(repo.githubId)}
+                onClick={() => removeFavorite(repo.repo_id)}
                 className="text-red-500 hover:text-red-700 font-semibold"
               >
                 Remove
